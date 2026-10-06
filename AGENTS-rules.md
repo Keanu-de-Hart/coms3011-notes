@@ -1,6 +1,6 @@
 <!-- Paste everything below this line at the END of the AGENTS.md that create-next-app generates
      (below its END:nextjs-agent-rules marker). Qoder reads AGENTS.md on every request.
-     If the brief is not the todo app: rewrite only the "Domain rules" section from the brief. -->
+     Only the "Domain rules" section changes per brief: fill it in from the P0 plan (PROMPTS.md). -->
 
 # Project rules: follow on every task
 
@@ -27,11 +27,12 @@
 - Never delete `public/` (the Dockerfile copies it).
 - Dates: render them in a client component using the browser's timezone (`suppressHydrationWarning`).
 
-## Domain rules (todo app: NEVER violate)
-- Statuses are exactly `todo | in_progress | complete` (labels Todo / In-Progress / Complete), enforced by a CHECK constraint. Never add a status.
-- Overdue is DERIVED at read time in SQL: `due_at IS NOT NULL AND due_at < now() AND status <> 'complete'`. Never a column, never a status, never an option in a status selector.
-- Archive, never delete: `archived_at timestamptz NULL`. No `DELETE FROM tasks` anywhere in the codebase. Archived tasks leave the active list and stay viewable (with Unarchive) at `/archive`.
-- `due_at` is `timestamptz`. The form uses `<input type="date">`; a client component converts the chosen day to the END of that day in the browser's timezone (`new Date(y, m-1, d, 23, 59, 59, 999).toISOString()`) and submits it in a hidden field. So overdue flips at the user's midnight, not the server's.
+## Domain rules (NEVER violate)
+<!-- FILL IN at the test from the P0 plan's invariants, then delete this comment. One line per invariant,
+     naming the exact column/SQL and what is forbidden (worked example in the kit: examples/todo/domain-rules.md).
+     Typical kinds: things never deleted (flag/timestamp instead); values DERIVED at read time (exact SQL);
+     fixed value sets (CHECK constraint); date/timezone rules. -->
+- The brief is in `docs/BRIEF.md`. When a task names a feature, read its text there, including its "Done when" line.
 - Everything survives a restart because it is in Postgres.
 
 ## Docker (working: do not change unless asked)

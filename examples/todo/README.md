@@ -1,6 +1,6 @@
-# <App name>
+# Todo
 
-<One sentence: what it does.> Next.js + PostgreSQL, packaged as a two-service Docker Compose stack.
+A local-first task manager: Next.js + PostgreSQL, packaged as a two-service Docker Compose stack.
 
 ## Running it
 
@@ -49,10 +49,27 @@ npm test                 # Vitest; every test runs on a fresh in-memory Postgres
 
 ## Database design
 
-_(One table per entity: columns with types and constraints, then the relationships/foreign keys. Note which values are derived at read time rather than stored.)_
+**tasks**: one row per task. Never deleted.
+
+| Column | Type | Notes |
+|---|---|---|
+| id | integer identity | PK |
+| title | text | NOT NULL, non-blank |
+| description | text | |
+| topic | text | |
+| status | text | CHECK in (`todo`, `in_progress`, `complete`) |
+| due_at | timestamptz | end of the chosen day in the user's timezone |
+| archived_at | timestamptz | NULL = active; set = archived (archive is a flag, not a delete) |
+| created_at, updated_at | timestamptz | |
+
+Overdue is **not stored**. It is derived at read time: `due_at < now() AND status <> 'complete'`.
 
 **schema_migrations**: id, name, applied_at of each migration that has run.
 
+Relationships: _(none yet; add each new table and its foreign keys here)_
+
 ## Features
 
-_(One line per feature, matching the brief's names/codes.)_
+- Create, edit and archive tasks (title, description, due date, topic); archived tasks remain viewable
+- Sort by topic, status and due date
+- Overdue flag derived from the due date

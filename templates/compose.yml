@@ -2,7 +2,7 @@ services:
   app:
     build: .
     environment:
-      DATABASE_URL: postgres://todo:todo@db:5432/todo
+      DATABASE_URL: postgres://app:app@db:5432/app
       NODE_ENV: production
     ports:
       - "3000:3000"
@@ -20,13 +20,13 @@ services:
     # Pinned to 17: the postgres:18 image moved its data directory, which breaks the volume path below.
     image: postgres:17-alpine
     environment:
-      POSTGRES_USER: todo
-      POSTGRES_PASSWORD: todo
-      POSTGRES_DB: todo
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: app
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U todo -d todo"]
+      test: ["CMD-SHELL", "pg_isready -U app -d app"]
       interval: 3s
       timeout: 3s
       retries: 20

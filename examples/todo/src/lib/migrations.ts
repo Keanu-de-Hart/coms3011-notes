@@ -2,9 +2,26 @@ import type { Db } from "./db";
 
 // APPEND-ONLY. Never edit or remove an entry once it has run; add a new one instead.
 // Never DROP a table holding data: an older database must upgrade in place.
-// Each entry may hold several statements, e.g.
-//   { id: 1, name: "create items", sql: `CREATE TABLE items (...); CREATE INDEX items_x_idx ON items (x);` },
-export const migrations: { id: number; name: string; sql: string }[] = [];
+export const migrations: { id: number; name: string; sql: string }[] = [
+  {
+    id: 1,
+    name: "create tasks",
+    sql: `
+      CREATE TABLE tasks (
+        id          integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+        title       text NOT NULL CHECK (length(trim(title)) > 0),
+        description text NOT NULL DEFAULT '',
+        topic       text NOT NULL DEFAULT '',
+        status      text NOT NULL DEFAULT 'todo' CHECK (status IN ('todo', 'in_progress', 'complete')),
+        due_at      timestamptz,
+        archived_at timestamptz,
+        created_at  timestamptz NOT NULL DEFAULT now(),
+        updated_at  timestamptz NOT NULL DEFAULT now()
+      );
+      CREATE INDEX tasks_active_idx ON tasks (archived_at, status, due_at);
+    `,
+  },
+];
 
 export async function migrate(db: Db): Promise<void> {
   await db.exec(`

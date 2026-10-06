@@ -1,7 +1,7 @@
 # Test playbook: 14:30–17:00
 
-**Prediction:** Lab 2 (Next.js todo + feature menu) with Lab 3 (Docker: `app` + `postgres` services) on top, so **Postgres replaces SQLite**, plus a public repo with README + `start.sh`.
-If the brief differs, the Docker, git and workflow parts below still apply. Only the domain rules and feature prompts change.
+**Prediction:** a Lab 2-style blitz (Next.js app: Core + a feature menu with points) on a **new topic**, with Lab 3's Docker requirement (`app` + `postgres` services) on top, so **Postgres replaces SQLite**, plus a public repo with README + `start.sh`.
+The skeleton in `templates/` is topic-neutral: data layer, migrations, Docker, tests. The topic-specific design happens at the test in prompt **P0** (5 min, Ask mode). The todo material in `examples/todo/` and PROMPTS.md shows how detailed the prompts should be.
 
 **Credits are not your bottleneck. Time is.** Agent mode costs about 7–12 credits per request. You have about 3000, and you'll use about 40 requests (~500). So use **Auto or Performance**, never Lite/Efficient "to save". Skip Repo Wiki (~50 credits, minutes of indexing, useless on a fresh repo). Minimise **round trips**, not credits: precise prompts with the design decided (PROMPTS.md) get it right first time.
 
@@ -20,10 +20,10 @@ If the brief differs, the Docker, git and workflow parts below still apply. Only
 
 | Clock | Phase | Done when |
 |---|---|---|
-| 14:30–14:40 | **Setup** (no AI): read the WHOLE brief, then the commands below, then the first push, then a clone test | Empty Next app on GitHub, clone works |
-| 14:40–14:50 | **Skeleton**: copy templates (or P1) | `npm test` green, `bash start.sh` → health ok |
-| 14:50–15:15 | **Core** (P2) | Full Lab 1 walkthrough passes. **Pushed. This is your safety net.** |
-| 15:15–16:30 | **Features**, one at a time: prompt, verify, `ship` | ~50 pts + overflow |
+| 14:30–14:40 | **Setup** (no AI): read the WHOLE brief, run the commands below, copy the skeleton, save the brief as `docs/BRIEF.md`, first push, clone test | Skeleton on GitHub, clone works |
+| 14:40–14:50 | **Plan** (P0, Ask mode) and fill in the Domain rules in AGENTS.md. Meanwhile `bash start.sh` once | Invariants + schema + feature picks written down; health ok |
+| 14:50–15:20 | **Core** (P2) | Every Core requirement passes in the browser. **Pushed. This is your safety net.** |
+| 15:20–16:30 | **Features**, one at a time: prompt, verify, `ship` | Required points + overflow |
 | 16:30 | **Feature freeze.** Nothing new after this. | |
 | 16:30–16:50 | **Clean-clone check** (below), fix only blockers | Fresh clone starts with `bash start.sh` |
 | 16:50 | Final push; check the GitHub web page shows the latest commit | |
@@ -44,17 +44,19 @@ node --version                                                    # 22.x or 24.x
 ```
 
 ```bash
-npx create-next-app@latest todo --ts --tailwind --eslint --app --src-dir --import-alias "@/*" --use-npm --yes
-cd todo
+npx create-next-app@latest app --ts --tailwind --eslint --app --src-dir --import-alias "@/*" --use-npm --yes
+cd app
 npm install pg @electric-sql/pglite
 npm install -D @types/node@22 @types/pg vitest     # @types/node@22 is REQUIRED: the default ^20 conflicts with vitest
 npm pkg set scripts.test="vitest run"
 echo ".data/" >> .gitignore
+mkdir -p docs
+pdftotext -layout ~/Downloads/<brief>.pdf docs/BRIEF.md   # if pdftotext is missing: open the PDF in the browser, Ctrl+A, Ctrl+C, paste into docs/BRIEF.md
 ```
 
 - **Never** let Qoder "fix" an install with `--legacy-peer-deps` / `--force`: `npm ci` in Docker then fails.
-- Append `AGENTS-rules.md` to the generated `AGENTS.md` (keep Next's block at the top; `next dev` re-adds it anyway).
-- Copy `templates/` into the project (keep the folder layout). Then `chmod +x start.sh`.
+- Append `AGENTS-rules.md` to the generated `AGENTS.md` (keep Next's block at the top; `next dev` re-adds it anyway). Its Domain rules section gets filled in after P0.
+- Copy `templates/` into the project (keep the folder layout; its README replaces the generated one). Then `chmod +x start.sh`.
 
 ```bash
 npm test && npm run build                        # both green before the first push
@@ -99,9 +101,17 @@ Then after each verified feature: `ship "Tags: join table, rename, colour, two-t
 
 ---
 
-## Feature picks (if the menu is the Lab 2 one)
+## Feature picks
 
-Chosen for **points per minute, low risk, and independence**. The order matters: the activity log goes first so later mutations get logged.
+P0 gives you a ranked list; sanity-check it with these rules:
+- **Points per minute, then risk.** Small, self-contained features (a new table + one page) are cheap. Avoid anything with calendar arithmetic (recurrence, month ends, DST), parsers (natural language, query languages), 10k-row performance work, live demos of external tools, or browser-test installs.
+- **Claim about 1.3x the required points.** A feature judged "partial" earns half, so the extras are insurance.
+- **Build order:** anything that wraps every mutation (activity log, history) first; then schema additions (new columns/tables); views and exports last, because they only read.
+- **Done when is the bar.** Before shipping a feature, do its "Done when" in the browser exactly as written.
+
+### Worked example: picks for the Lab 2 todo menu
+
+The order matters: the activity log goes first so later mutations get logged.
 
 | # | Feature | Pts | Running | Risk |
 |---|---|---|---|---|
@@ -127,12 +137,12 @@ If you're behind at 16:00: stop picking new features and make sure every claimed
 ## 16:30: clean-clone check (do it for real)
 
 ```bash
-cd ~/todo && docker compose down          # free port 3000; also stop npm run dev
+cd ~/app && docker compose down           # free port 3000; also stop npm run dev
 cd /tmp && rm -rf final && git clone https://github.com/<you>/<repo>.git final && cd final
 bash start.sh                              # must print "Ready"
 ```
 
-Then in the browser: the Core walkthrough + 2 features, `docker compose down && docker compose up -d` (data still there?), and check README commands match reality. Afterwards `docker compose down -v` in `/tmp/final`.
+Then in the browser: the Core checklist + 2 features, `docker compose down && docker compose up -d` (data still there?), and check README commands match reality. Afterwards `docker compose down -v` in `/tmp/final`.
 
 README must contain: requirements (Docker + Compose v2; Node 22 for dev), **`bash start.sh`** (or `docker compose up -d --build`), the URL, how to stop, dev (`npm install && npm run dev`), tests (`npm test`), seed, third-party code with a reason per package, database design (tables + relationships), features list.
 
