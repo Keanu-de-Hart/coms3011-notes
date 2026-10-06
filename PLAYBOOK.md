@@ -55,8 +55,15 @@ pdftotext -layout ~/Downloads/<brief>.pdf docs/BRIEF.md   # if pdftotext is miss
 ```
 
 - **Never** let Qoder "fix" an install with `--legacy-peer-deps` / `--force`: `npm ci` in Docker then fails.
-- Append `AGENTS-rules.md` to the generated `AGENTS.md` (keep Next's block at the top; `next dev` re-adds it anyway). Its Domain rules section gets filled in after P0.
-- Copy `templates/` into the project (keep the folder layout; its README replaces the generated one). Then `chmod +x start.sh`.
+- `AGENTS-rules.md` gets appended to the generated `AGENTS.md` below (keep Next's block at the top; `next dev` re-adds it anyway). Its Domain rules section gets filled in after P0.
+- Copy the templates in (the notes repo is public, so no token is needed). Run this from inside the new project folder:
+
+```bash
+git clone https://github.com/Keanu-de-Hart/coms3011-notes ~/notes
+cp -r ~/notes/templates/. .            # keeps the folder layout; its README replaces the generated one
+cat ~/notes/AGENTS-rules.md >> AGENTS.md
+chmod +x start.sh
+```
 
 ```bash
 npm test && npm run build                        # both green before the first push
